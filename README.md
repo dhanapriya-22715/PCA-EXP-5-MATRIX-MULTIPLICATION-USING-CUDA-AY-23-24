@@ -1,9 +1,9 @@
 # PCA-EXP-5-MATRIX-MULTIPLICATION-USING-CUDA-AY-23-24
 <h3>AIM:</h3>
-<h3>ENTER YOUR NAME</h3>
-<h3>ENTER YOUR REGISTER NO</h3>
-<h3>EX. NO</h3>
-<h3>DATE</h3>
+<h3>ENTER YOUR NAME : Dhanappriya S</h3>
+<h3>ENTER YOUR REGISTER NO : 212224230056</h3>
+<h3>EX. NO : 5</h3>
+<h3>DATE : 24/11/2026</h3>
 <h1> <align=center> MATRIX MULTIPLICATION USING CUDA </h3>
   Implement Matrix Multiplication using GPU.</h3>
 
@@ -27,10 +27,113 @@ Google Colab with NVCC Compiler
 12.	Print Result: Print the result matrix and the elapsed time.
 13.	Free Device Memory: Finally, free the device memory that was allocated for the matrices.
 ## PROGRAM:
-TYPE YOUR CODE HERE
+```
+%%writefile matmul.cu
+
+#include <stdio.h>
+#include <cuda_runtime.h>
+#include <sys/time.h>
+
+#define SIZE 4
+#define BLOCK_SIZE 2
+
+__global__ void matrixMultiply(int *a, int *b, int *c, int size)
+{
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+    int sum = 0;
+
+    if (row < size && col < size)
+    {
+        for (int k = 0; k < size; ++k)
+        {
+            sum += a[row * size + k] * b[k * size + col];
+        }
+
+        c[row * size + col] = sum;
+    }
+}
+
+int main()
+{
+    int a[SIZE][SIZE], b[SIZE][SIZE], c[SIZE][SIZE];
+
+    int *dev_a, *dev_b, *dev_c;
+
+    int size = SIZE * SIZE * sizeof(int);
+
+    // Initialize matrices
+    for (int i = 0; i < SIZE; ++i)
+    {
+        for (int j = 0; j < SIZE; ++j)
+        {
+            a[i][j] = i + j;
+            b[i][j] = i - j;
+        }
+    }
+
+    // Allocate GPU memory
+    cudaMalloc((void**)&dev_a, size);
+    cudaMalloc((void**)&dev_b, size);
+    cudaMalloc((void**)&dev_c, size);
+
+    // Copy matrices from CPU to GPU
+    cudaMemcpy(dev_a, a, size, cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_b, b, size, cudaMemcpyHostToDevice);
+
+    // Define grid and block dimensions
+    dim3 dimGrid(SIZE / BLOCK_SIZE, SIZE / BLOCK_SIZE);
+    dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
+
+    // Start timer
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
+
+    // Launch CUDA kernel
+    matrixMultiply<<<dimGrid, dimBlock>>>
+        (dev_a, dev_b, dev_c, SIZE);
+
+    // Wait for GPU to finish
+    cudaDeviceSynchronize();
+
+    // Copy result from GPU to CPU
+    cudaMemcpy(c, dev_c, size, cudaMemcpyDeviceToHost);
+
+    // Stop timer
+    gettimeofday(&end, NULL);
+
+    double elapsed_time =
+        (end.tv_sec - start.tv_sec) +
+        (end.tv_usec - start.tv_usec) / 1000000.0;
+
+    // Print result matrix
+    printf("Result Matrix:\n");
+
+    for (int i = 0; i < SIZE; ++i)
+    {
+        for (int j = 0; j < SIZE; ++j)
+        {
+            printf("%d ", c[i][j]);
+        }
+
+        printf("\n");
+    }
+
+    printf("Elapsed Time: %.6f seconds\n", elapsed_time);
+
+    // Free GPU memory
+    cudaFree(dev_a);
+    cudaFree(dev_b);
+    cudaFree(dev_c);
+
+    return 0;
+}
+```
 
 ## OUTPUT:
-SHOW YOUR OUTPUT HERE
+<img width="572" height="172" alt="WhatsApp Image 2026-11-23 at 2 25 55 PM" src="https://github.com/user-attachments/assets/bbd727b8-5961-4974-85cc-d29e86fe5078" />
+
 
 ## RESULT:
-Thus the program has been executed by using CUDA to mulptiply two matrices. It is observed that there are variations in host and device elapsed time. Device took ______________time and host took ___________time.
+Thus the program has been executed by using CUDA to mulptiply two matrices. It is observed that there are variations in host and device elapsed time. Device took time and host took time.
